@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "105422922840",
+    "project_id": "famio-project",
+    "storage_bucket": "famio-project.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:105422922840:android:f3697aa9e42b1abb42962d",
+        "android_client_info": {
+          "package_name": "com.example.famioproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBzusKsfuM3pvzA-RaM9A4GxBppZcI17xw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
