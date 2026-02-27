@@ -84,13 +84,42 @@ class _SignUpPageState extends State<SignUpPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    _buildTextField("Full Name", Icons.person, false, _nameController),
+                    _buildTextField(
+                      "Full Name",
+                      Icons.person,
+                      false,
+                      _nameController,
+                    ),
                     const SizedBox(height: 16),
 
-                    _buildTextField("Email", Icons.email, false, _emailController),
+                    _buildTextField(
+                      "Email",
+                      Icons.email,
+                      false,
+                      _emailController,
+                    ),
                     const SizedBox(height: 16),
 
-                    _buildTextField("Password", Icons.lock, true, _passwordController),
+                    _buildTextField(
+                      "Password",
+                      Icons.lock,
+                      true,
+                      _passwordController,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "Please enter a password";
+                        }
+                        if (value.length < 8) {
+                          return "Password must be at least 8 characters long";
+                        }
+                        if (!RegExp(
+                          r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$',
+                        ).hasMatch(value)) {
+                          return "Password must include uppercase, lowercase, number, and special character";
+                        }
+                        return null;
+                      },
+                    ),
                     const SizedBox(height: 16),
 
                     // ---------------- ROLE DROPDOWN ----------------
@@ -104,10 +133,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       iconEnabledColor: Colors.white,
                       style: const TextStyle(color: Colors.white),
                       items: _roles.map((role) {
-                        return DropdownMenuItem(
-                          value: role,
-                          child: Text(role),
-                        );
+                        return DropdownMenuItem(value: role, child: Text(role));
                       }).toList(),
                       onChanged: (value) {
                         setState(() => _selectedRole = value);
@@ -209,14 +235,17 @@ class _SignUpPageState extends State<SignUpPage> {
     String hint,
     IconData icon,
     bool isPassword,
-    TextEditingController controller,
-  ) {
+    TextEditingController controller, {
+    String? Function(String?)? validator,
+  }) {
     return TextFormField(
       controller: controller,
       obscureText: isPassword,
       style: const TextStyle(color: Colors.white),
-      validator: (value) =>
-          value == null || value.isEmpty ? "Please enter $hint" : null,
+      validator:
+          validator ??
+          (value) =>
+              value == null || value.isEmpty ? "Please enter $hint" : null,
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: const TextStyle(color: Colors.white70),

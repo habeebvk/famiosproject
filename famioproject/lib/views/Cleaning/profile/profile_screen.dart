@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 // Replace with your actual login screen
 import 'package:famioproject/views/auth/login_screen.dart';
+import 'package:famioproject/services/auth_services.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -17,15 +18,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final ImagePicker _picker = ImagePicker();
   File? _profileImage;
 
-  final TextEditingController _nameController =
-      TextEditingController(text: "Admin ");
-  final TextEditingController _emailController =
-      TextEditingController(text: "admin@uber.com");
-  final TextEditingController _phoneController =
-      TextEditingController(text: "+91 9876543210");
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
 
   // Uber Blue
   static const Color _uberBlue = Color(0xFF0068FF);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final userData = await AuthService().getCurrentUserData();
+      if (userData != null) {
+        setState(() {
+          _nameController.text = userData['name'] ?? '';
+          _emailController.text = userData['email'] ?? '';
+          if (userData.containsKey('phone')) {
+            _phoneController.text = userData['phone'];
+          }
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading user data: $e");
+    }
+  }
 
   Future<void> _pickImage() async {
     showModalBottomSheet(
@@ -62,8 +83,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _pickFromSource(ImageSource source) async {
     Navigator.pop(context);
-    final XFile? pickedFile =
-        await _picker.pickImage(source: source, imageQuality: 80);
+    final XFile? pickedFile = await _picker.pickImage(
+      source: source,
+      imageQuality: 80,
+    );
     if (pickedFile != null) {
       setState(() {
         _profileImage = File(pickedFile.path);
@@ -88,7 +111,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Logout',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
         content: const Text('Are you sure you want to logout?'),
         actions: [
           TextButton(
@@ -115,9 +141,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50], // Light background
       appBar: AppBar(
-        leading: IconButton(onPressed: (){
-          Navigator.pop(context);
-        }, icon: Icon(Icons.arrow_back,color: Colors.white,)),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+        ),
         title: const Text(
           "Profile",
           style: TextStyle(
@@ -145,10 +174,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   CircleAvatar(
                     radius: 70,
                     backgroundColor: Colors.grey[200],
-                    backgroundImage:
-                        _profileImage != null ? FileImage(_profileImage!) : null,
+                    backgroundImage: _profileImage != null
+                        ? FileImage(_profileImage!)
+                        : null,
                     child: _profileImage == null
-                        ? Icon(LucideIcons.user, size: 70, color: Colors.grey[600])
+                        ? Icon(
+                            LucideIcons.user,
+                            size: 70,
+                            color: Colors.grey[600],
+                          )
                         : null,
                   ),
                   Positioned(
@@ -160,7 +194,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         color: _uberBlue,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(LucideIcons.camera, size: 18, color: Colors.white),
+                      child: const Icon(
+                        LucideIcons.camera,
+                        size: 18,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -226,8 +264,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
               height: 52,
               child: OutlinedButton.icon(
                 onPressed: _logout,
-                icon: const Icon(LucideIcons.logOut, size: 20, color: Colors.red),
-                label: const Text("Logout", style: TextStyle(fontSize: 16, color: Colors.red)),
+                icon: const Icon(
+                  LucideIcons.logOut,
+                  size: 20,
+                  color: Colors.red,
+                ),
+                label: const Text(
+                  "Logout",
+                  style: TextStyle(fontSize: 16, color: Colors.red),
+                ),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Colors.red, width: 1.5),
                   shape: RoundedRectangleBorder(
@@ -268,7 +313,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: _uberBlue, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
     );
   }

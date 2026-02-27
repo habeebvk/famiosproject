@@ -7,6 +7,7 @@ class FoodOrder {
   final String address;
   final bool? accepted;
   final Timestamp createdAt;
+  final String userName;
 
   FoodOrder({
     required this.id,
@@ -15,6 +16,7 @@ class FoodOrder {
     required this.address,
     this.accepted,
     required this.createdAt,
+    required this.userName,
   });
 
   factory FoodOrder.fromFirestore(DocumentSnapshot doc) {
@@ -26,6 +28,7 @@ class FoodOrder {
       address: data['address'] ?? '',
       accepted: data['accepted'],
       createdAt: data['createdAt'] ?? Timestamp.now(),
+      userName: data['userName'] ?? 'Unknown User',
     );
   }
 }

@@ -59,6 +59,7 @@ class _ServiceRequestPageState extends State<ServiceRequestPage> {
                 child: ListTile(
                   title: Text("Booking #${booking.id.substring(0, 6)}"),
                   subtitle: Text(
+                    "Requester: ${booking.userName}\n"
                     "Address: ${booking.address}\n"
                     "Total: ₹${booking.totalPrice}\n"
                     "Status: ${booking.status.toUpperCase()}",
@@ -69,7 +70,10 @@ class _ServiceRequestPageState extends State<ServiceRequestPage> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.check, color: Colors.green),
+                              icon: const Icon(
+                                Icons.check,
+                                color: Colors.green,
+                              ),
                               onPressed: () => _accept(booking.id),
                             ),
                             IconButton(
@@ -79,9 +83,8 @@ class _ServiceRequestPageState extends State<ServiceRequestPage> {
                           ],
                         )
                       : booking.status == 'accepted'
-                          ? const Icon(Icons.check_circle,
-                              color: Colors.green)
-                          : const Icon(Icons.cancel, color: Colors.red),
+                      ? const Icon(Icons.check_circle, color: Colors.green)
+                      : const Icon(Icons.cancel, color: Colors.red),
                 ),
               );
             },

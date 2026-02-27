@@ -1,13 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:famioproject/models/cleaning/book.dart';
 import 'package:famioproject/models/cleaning/service.dart';
+import 'package:famioproject/services/auth_services.dart';
 
 class ServiceFirestoreService {
-  final _serviceCollection =
-      FirebaseFirestore.instance.collection('services');
+  final _serviceCollection = FirebaseFirestore.instance.collection('services');
 
-  final _bookingCollection =
-      FirebaseFirestore.instance.collection('bookings');
+  final _bookingCollection = FirebaseFirestore.instance.collection('bookings');
 
   /// ✅ ADD BOOKING (FIXED)
   Future<void> addBooking({
@@ -17,19 +16,19 @@ class ServiceFirestoreService {
     required double totalPrice,
     required List<Service> services,
   }) async {
+    final userData = await AuthService().getCurrentUserData();
+    final userName = userData?['name'] ?? 'Unknown User';
+
     await _bookingCollection.add({
       'address': address,
       'date': Timestamp.fromDate(date),
       'time': time,
       'totalPrice': totalPrice,
       'services': services
-          .map((s) => {
-                'id': s.id,
-                'name': s.name,
-                'price': s.price,
-              })
+          .map((s) => {'id': s.id, 'name': s.name, 'price': s.price})
           .toList(),
       'status': 'pending', // ⭐ REQUIRED
+      'userName': userName,
       'createdAt': FieldValue.serverTimestamp(),
     });
   }
@@ -43,26 +42,26 @@ class ServiceFirestoreService {
     });
   }
 
-
   /// ✅ GET SERVICES
-    Stream<List<Service>> getServices() {
-      return FirebaseFirestore.instance
-          .collection('services')
-          .snapshots()
-          .map((snapshot) {
-            return snapshot.docs.map((doc) {
-              return Service.fromFirestore(doc);
-            }).toList();
-          });
-    }
+  Stream<List<Service>> getServices() {
+    return FirebaseFirestore.instance.collection('services').snapshots().map((
+      snapshot,
+    ) {
+      return snapshot.docs.map((doc) {
+        return Service.fromFirestore(doc);
+      }).toList();
+    });
+  }
 
   /// ✅ GET BOOKINGS (FIXED)
   Stream<List<Booking>> getBookings() {
     return _bookingCollection
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((e) => Booking.fromFirestore(e)).toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((e) => Booking.fromFirestore(e)).toList(),
+        );
   }
 
   /// ✅ UPDATE STATUS (FIXED)
@@ -71,15 +70,14 @@ class ServiceFirestoreService {
   }
 
   Stream<List<Booking>> getBookingsByStatus(String status) {
-  return FirebaseFirestore.instance
-      .collection('bookings') // 🔴 confirm collection name
-      .where('status', isEqualTo: status)
-      .snapshots()
-      .map((snapshot) {
-        return snapshot.docs
-            .map((doc) => Booking.fromFirestore(doc))
-            .toList();
-      });
-}
-
+    return FirebaseFirestore.instance
+        .collection('bookings') // 🔴 confirm collection name
+        .where('status', isEqualTo: status)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs
+              .map((doc) => Booking.fromFirestore(doc))
+              .toList();
+        });
+  }
 }

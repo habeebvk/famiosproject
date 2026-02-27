@@ -30,10 +30,10 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
   @override
   void initState() {
     super.initState();
-    _nameController =
-        TextEditingController(text: widget.product?.name ?? '');
-    _priceController =
-        TextEditingController(text: widget.product?.price.toString() ?? '');
+    _nameController = TextEditingController(text: widget.product?.name ?? '');
+    _priceController = TextEditingController(
+      text: widget.product?.price.toString() ?? '',
+    );
     _existingImageUrl = widget.product?.imageUrl;
   }
 
@@ -54,8 +54,7 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
   /// -------- Upload Image --------
   Future<String> _uploadImage(File image) async {
     final fileName = DateTime.now().millisecondsSinceEpoch.toString();
-    final ref =
-        FirebaseStorage.instance.ref().child('products/$fileName.jpg');
+    final ref = FirebaseStorage.instance.ref().child('products/$fileName.jpg');
 
     await ref.putFile(image);
     return await ref.getDownloadURL();
@@ -67,30 +66,53 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
 
     setState(() => _loading = true);
 
-    String imageUrl = _existingImageUrl ?? '';
+    try {
+      String imageUrl = _existingImageUrl ?? '';
 
-    if (_imageFile != null) {
-      imageUrl = await _uploadImage(_imageFile!);
+      if (_imageFile != null) {
+        imageUrl = await _uploadImage(_imageFile!);
+      }
+
+      final product = Product(
+        id: widget.product?.id ?? '',
+        name: _nameController.text.trim(),
+        price: double.parse(_priceController.text),
+        imageUrl: imageUrl,
+      );
+
+      if (widget.product == null) {
+        await _productService.addProduct(product);
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text("Product added")));
+        }
+      } else {
+        await _productService.updateProduct(product);
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text("Product updated")));
+        }
+      }
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: ${e.toString()}"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _loading = false);
+      }
     }
-
-    final product = Product(
-      id: widget.product?.id ?? '',
-      name: _nameController.text.trim(),
-      price: double.parse(_priceController.text),
-      imageUrl: imageUrl,
-    );
-
-    if (widget.product == null) {
-      await _productService.addProduct(product);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Product added")));
-    } else {
-      await _productService.updateProduct(product);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text("Product updated")));
-    }
-
-    Navigator.pop(context);
   }
 
   @override
@@ -121,12 +143,9 @@ class _AddEditProductPageState extends State<AddEditProductPage> {
                   child: _imageFile != null
                       ? Image.file(_imageFile!, fit: BoxFit.cover)
                       : (_existingImageUrl != null &&
-                              _existingImageUrl!.isNotEmpty)
-                          ? Image.network(_existingImageUrl!,
-                              fit: BoxFit.cover)
-                          : const Center(
-                              child: Icon(Icons.camera_alt, size: 40),
-                            ),
+                            _existingImageUrl!.isNotEmpty)
+                      ? Image.network(_existingImageUrl!, fit: BoxFit.cover)
+                      : const Center(child: Icon(Icons.camera_alt, size: 40)),
                 ),
               ),
 

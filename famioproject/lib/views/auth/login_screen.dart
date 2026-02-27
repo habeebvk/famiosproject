@@ -11,6 +11,7 @@ import 'package:famioproject/views/fooddelivery/home/bottom_nav.dart';
 import 'package:famioproject/views/cleaning/cleaninghome_screen.dart';
 import 'package:famioproject/views/uber/home/bottom_nav.dart';
 import 'package:famioproject/views/user/home/bottom_navigation.dart';
+import 'package:famioproject/views/admin/admin_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,6 +34,7 @@ class _LoginScreenState extends State<LoginScreen> {
     'Cleaning',
     'Uber',
     'Patient',
+    'Admin',
   ];
 
   String? _selectedRole;
@@ -65,7 +67,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.lock_outline, size: 80, color: Colors.white),
+                        const Icon(
+                          Icons.lock_outline,
+                          size: 80,
+                          color: Colors.white,
+                        ),
                         const SizedBox(height: 20),
                         const Text(
                           "Welcome Back",
@@ -170,17 +176,30 @@ class _LoginScreenState extends State<LoginScreen> {
                             onPressed: () async {
                               if (_formKey.currentState!.validate()) {
                                 try {
-                                  final roleFromDB =
-                                      await _authService.loginUser(
-                                    email: _emailController.text.trim(),
-                                    password: _passwordController.text.trim(),
-                                  );
+                                  // Static credentials for Admin
+                                  if (_selectedRole == 'Admin' &&
+                                      _emailController.text.trim() ==
+                                          'admin@admin.com' &&
+                                      _passwordController.text.trim() ==
+                                          'admin123') {
+                                    _navigateToDashboard(context, 'Admin');
+                                    return;
+                                  }
+
+                                  final roleFromDB = await _authService
+                                      .loginUser(
+                                        email: _emailController.text.trim(),
+                                        password: _passwordController.text
+                                            .trim(),
+                                      );
 
                                   // OPTIONAL: verify selected role vs stored role
                                   if (roleFromDB != _selectedRole) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
-                                        content: Text("Selected role does not match account role"),
+                                        content: Text(
+                                          "Selected role does not match account role",
+                                        ),
                                       ),
                                     );
                                     return;
@@ -189,7 +208,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                   _navigateToDashboard(context, roleFromDB);
                                 } catch (e) {
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text(e.toString())),
+                                    SnackBar(
+                                      content: Text(
+                                        e.toString().replaceAll(
+                                          'Exception: ',
+                                          '',
+                                        ),
+                                      ),
+                                    ),
                                   );
                                 }
                               }
@@ -201,7 +227,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 borderRadius: BorderRadius.circular(30),
                               ),
                             ),
-                            child: const Text("Login", style: TextStyle(fontSize: 18)),
+                            child: const Text(
+                              "Login",
+                              style: TextStyle(fontSize: 18),
+                            ),
                           ),
                         ),
 
@@ -218,7 +247,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (_) => SignUpPage()),
+                                  MaterialPageRoute(
+                                    builder: (_) => SignUpPage(),
+                                  ),
                                 );
                               },
                               child: const Text(
@@ -259,6 +290,9 @@ class _LoginScreenState extends State<LoginScreen> {
         break;
       case 'Cleaning':
         destination = const AdminDashboard();
+        break;
+      case 'Admin':
+        destination = const SuperAdminDashboard();
         break;
       case 'Uber':
         destination = const UberBottomNav();

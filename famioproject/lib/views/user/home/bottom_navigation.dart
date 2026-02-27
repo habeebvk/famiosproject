@@ -1,4 +1,3 @@
-import 'package:famioproject/views/user/bookings/bookings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:famioproject/views/user/home/famio_screen.dart';
 import 'package:famioproject/views/user/hospital/hospital_screen.dart';
@@ -19,7 +18,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = const [
     HomeScreen(),
     Hospitalscreen(),
-   RequestTabScreen(),
+    ProfilePage()
   ];
 
   @override
@@ -70,7 +69,7 @@ class _MainScreenState extends State<MainScreen> {
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
             BottomNavigationBarItem(icon: Icon(Icons.local_hospital), label: 'Hospital'),
-            BottomNavigationBarItem(icon: Icon(Icons.book_online), label: 'Bookings'),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
           ],
         ),
       ),

@@ -51,11 +51,17 @@ class _FoodRequestDashboardState extends State<FoodRequestDashboard>
       backgroundColor: const Color(0xFFF6F8FA),
       appBar: AppBar(
         leading: IconButton(
-            onPressed: () {}, icon: const Icon(Icons.arrow_back, color: Colors.white)),
+          onPressed: () {},
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+        ),
         elevation: 0,
         title: const Text(
           '🍴 Food Delivery',
-          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18, color: Colors.white),
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+            color: Colors.white,
+          ),
         ),
         centerTitle: true,
         backgroundColor: Colors.green[600],
@@ -72,7 +78,9 @@ class _FoodRequestDashboardState extends State<FoodRequestDashboard>
           }
 
           final orders = snapshot.data!;
-          final acceptedOrders = orders.where((o) => o.accepted == true).toList();
+          final acceptedOrders = orders
+              .where((o) => o.accepted == true)
+              .toList();
 
           return Padding(
             padding: const EdgeInsets.all(16),
@@ -139,8 +147,14 @@ class _FoodRequestDashboardState extends State<FoodRequestDashboard>
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildRequestList(orders, showActions: true), // All Requests
-                      _buildRequestList(acceptedOrders, showActions: false), // Accepted only
+                      _buildRequestList(
+                        orders,
+                        showActions: true,
+                      ), // All Requests
+                      _buildRequestList(
+                        acceptedOrders,
+                        showActions: false,
+                      ), // Accepted only
                     ],
                   ),
                 ),
@@ -156,7 +170,10 @@ class _FoodRequestDashboardState extends State<FoodRequestDashboard>
   Widget _buildRequestList(List<FoodOrder> orders, {bool showActions = true}) {
     if (orders.isEmpty) {
       return const Center(
-        child: Text("No orders available.", style: TextStyle(color: Colors.grey)),
+        child: Text(
+          "No orders available.",
+          style: TextStyle(color: Colors.grey),
+        ),
       );
     }
 
@@ -196,6 +213,7 @@ class _FoodRequestDashboardState extends State<FoodRequestDashboard>
           child: ListTile(
             title: Text("Order #${order.id.substring(0, 6)}"),
             subtitle: Text(
+              "Requester: ${order.userName}\n"
               "Items: ${order.items.map((e) => e['name']).join(', ')}\n"
               "Total: ₹${order.total.toStringAsFixed(2)}\n"
               "Address: ${order.address}",
@@ -237,11 +255,19 @@ class _FoodRequestDashboardState extends State<FoodRequestDashboard>
         children: [
           Icon(icon, color: Colors.white, size: 26),
           const SizedBox(height: 10),
-          Text(title, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+          Text(
+            title,
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
           const SizedBox(height: 6),
-          Text("$count",
-              style: const TextStyle(
-                  fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white)),
+          Text(
+            "$count",
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
         ],
       ),
     );

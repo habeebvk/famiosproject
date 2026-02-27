@@ -52,6 +52,8 @@ class UberMainPage extends StatelessWidget {
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(icon: Icon(Icons.arrow_back,color: Colors.white,),onPressed: (){ Navigator.pop(context);}
+        ,),
         flexibleSpace: Container(
           decoration: const BoxDecoration(
             gradient: LinearGradient(

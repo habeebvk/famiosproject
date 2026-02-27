@@ -4,16 +4,10 @@ class OrderItem {
   final String name;
   final int quantity;
 
-  OrderItem({
-    required this.name,
-    required this.quantity,
-  });
+  OrderItem({required this.name, required this.quantity});
 
   factory OrderItem.fromMap(Map<String, dynamic> data) {
-    return OrderItem(
-      name: data['name'],
-      quantity: data['quantity'],
-    );
+    return OrderItem(name: data['name'], quantity: data['quantity']);
   }
 }
 
@@ -22,12 +16,14 @@ class OrderModel {
   final List<OrderItem> items;
   final double totalAmount;
   final String status;
+  final String userName;
 
   OrderModel({
     required this.id,
     required this.items,
     required this.totalAmount,
     required this.status,
+    required this.userName,
   });
 
   factory OrderModel.fromFirestore(DocumentSnapshot doc) {
@@ -35,11 +31,10 @@ class OrderModel {
 
     return OrderModel(
       id: doc.id,
-      items: (data['items'] as List)
-          .map((e) => OrderItem.fromMap(e))
-          .toList(),
+      items: (data['items'] as List).map((e) => OrderItem.fromMap(e)).toList(),
       totalAmount: (data['totalAmount'] as num).toDouble(),
       status: data['status'] ?? 'pending',
+      userName: data['userName'] ?? 'Unknown User',
     );
   }
 }

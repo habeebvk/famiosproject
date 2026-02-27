@@ -1,6 +1,8 @@
 import 'package:famioproject/models/cleaning/service.dart';
 import 'package:famioproject/services/cleaning/service_clean.dart';
 import 'package:flutter/material.dart';
+import 'package:famioproject/services/razorpay_service.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 class BookingScreen extends StatefulWidget {
   const BookingScreen({super.key});
@@ -19,6 +21,80 @@ class _BookingScreenState extends State<BookingScreen> {
 
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
+  List<Service> _availableServices = [];
+
+  late RazorpayService _razorpayService;
+
+  @override
+  void initState() {
+    super.initState();
+    _razorpayService = RazorpayService();
+    _razorpayService.init(
+      onSuccess: _handlePaymentSuccess,
+      onFailure: _handlePaymentFailure,
+      onExternalWallet: _handleExternalWallet,
+    );
+  }
+
+  @override
+  void dispose() {
+    _razorpayService.dispose();
+    addressController.dispose();
+    super.dispose();
+  }
+
+  void _handlePaymentFailure(PaymentFailureResponse response) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Payment failed: ${response.message}")),
+    );
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("External wallet selected: ${response.walletName}"),
+      ),
+    );
+  }
+
+  Future<void> _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    final selectedServices = _availableServices
+        .where((s) => selectedServiceIds.contains(s.id))
+        .toList();
+
+    final total = _totalPrice(_availableServices);
+
+    try {
+      await _service.addBooking(
+        address: addressController.text.trim(),
+        date: selectedDate!,
+        time: selectedTime!.format(context),
+        totalPrice: total,
+        services: selectedServices,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Booking Confirmed! ID: ${response.paymentId ?? 'N/A'}",
+          ),
+        ),
+      );
+
+      setState(() {
+        selectedServiceIds.clear();
+        addressController.clear();
+        selectedDate = null;
+        selectedTime = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Failed to confirm booking: $e")));
+    }
+  }
 
   Future<void> _selectDateTime() async {
     final date = await showDatePicker(
@@ -84,8 +160,7 @@ class _BookingScreenState extends State<BookingScreen> {
 
                 /// ✅ SERVICES WITH PERSISTENT SELECTION
                 ...services.map((service) {
-                  final isSelected =
-                      selectedServiceIds.contains(service.id);
+                  final isSelected = selectedServiceIds.contains(service.id);
 
                   return CheckboxListTile(
                     title: Text(service.name),
@@ -146,13 +221,17 @@ class _BookingScreenState extends State<BookingScreen> {
                   children: [
                     const Text(
                       "Total Price:",
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
                       "₹${total.toStringAsFixed(2)}",
                       style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold),
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -162,48 +241,67 @@ class _BookingScreenState extends State<BookingScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                   onPressed: selectedServiceIds.isEmpty
-                    ? null
-                    : () async {
-                        if (addressController.text.trim().isEmpty) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Enter address")),
-                          );
-                          return;
-                        }
+                    onPressed: selectedServiceIds.isEmpty
+                        ? null
+                        : () async {
+                            if (addressController.text.trim().isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Enter address")),
+                              );
+                              return;
+                            }
 
-                        if (selectedDate == null || selectedTime == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text("Select date & time")),
-                          );
-                          return;
-                        }
+                            if (selectedDate == null || selectedTime == null) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text("Select date & time"),
+                                ),
+                              );
+                              return;
+                            }
 
-                        final selectedServices = services
-                            .where((s) => selectedServiceIds.contains(s.id))
-                            .toList();
+                            // _availableServices needs to be updated from the stream snapshot
+                            // This is important for _handlePaymentSuccess to work correctly
+                            setState(() {
+                              _availableServices = services;
+                            });
 
-                        final total = _totalPrice(services);
+                            final total = _totalPrice(services);
 
-                        await _service.addBooking(
-                          address: addressController.text.trim(),
-                          date: selectedDate!,
-                          time: selectedTime!.format(context),
-                          totalPrice: total,
-                          services: selectedServices,
-                        );
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Booking Confirmed")),
-                        );
-
-                        setState(() {
-                          selectedServiceIds.clear();
-                          addressController.clear();
-                          selectedDate = null;
-                          selectedTime = null;
-                        });
-                      },
+                            showDialog(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                title: const Text("🛍️ Checkout Summary"),
+                                content: Text(
+                                  "Your total bill is ₹${total.toStringAsFixed(2)}",
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    child: const Text("Cancel"),
+                                    onPressed: () => Navigator.pop(context),
+                                  ),
+                                  ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      foregroundColor: Colors.white,
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pop(context);
+                                      _razorpayService.openCheckout(
+                                        amount: total,
+                                        description: 'Cleaning Service Payment',
+                                      );
+                                    },
+                                    child: const Text("Confirm"),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
 
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),

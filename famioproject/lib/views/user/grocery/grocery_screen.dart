@@ -1,7 +1,9 @@
 import 'package:famioproject/models/grocery/product_model.dart';
 import 'package:famioproject/services/grocery/order_save.dart';
 import 'package:famioproject/services/grocery/product.dart';
+import 'package:famioproject/services/razorpay_service.dart';
 import 'package:flutter/material.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 
 class GroceryPage extends StatefulWidget {
   const GroceryPage({super.key});
@@ -13,14 +15,73 @@ class GroceryPage extends StatefulWidget {
 class _GroceryPageState extends State<GroceryPage> {
   final ProductService _productService = ProductService();
   final OrderService _orderService = OrderService();
+  late RazorpayService _razorpayService;
 
   final Map<String, int> _cart = {}; // productId -> quantity
   List<Product> _products = [];
 
-  double get totalPrice => _cart.entries.fold(0, (sum, entry) {
-        final product = _products.firstWhere((p) => p.id == entry.key);
-        return sum + product.price * entry.value;
+  @override
+  void initState() {
+    super.initState();
+    _razorpayService = RazorpayService();
+    _razorpayService.init(
+      onSuccess: _handlePaymentSuccess,
+      onFailure: _handlePaymentFailure,
+      onExternalWallet: _handleExternalWallet,
+    );
+  }
+
+  @override
+  void dispose() {
+    _razorpayService.dispose();
+    super.dispose();
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    try {
+      await _orderService.createOrder(
+        products: _products,
+        cart: _cart,
+        totalAmount: totalPrice,
+        paymentId: response.paymentId,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Order placed successfully! Payment ID: ${response.paymentId}",
+          ),
+        ),
+      );
+
+      setState(() {
+        _cart.clear();
       });
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Error creating order: $e")));
+    }
+  }
+
+  void _handlePaymentFailure(PaymentFailureResponse response) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Payment failed: ${response.message}")),
+    );
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("External wallet selected: ${response.walletName}"),
+      ),
+    );
+  }
+
+  double get totalPrice => _cart.entries.fold(0, (sum, entry) {
+    final product = _products.firstWhere((p) => p.id == entry.key);
+    return sum + product.price * entry.value;
+  });
 
   void incrementItem(String productId) {
     setState(() {
@@ -63,29 +124,12 @@ class _GroceryPageState extends State<GroceryPage> {
               backgroundColor: Colors.green,
               foregroundColor: Colors.white,
             ),
-            onPressed: () async {
-              try {
-                await _orderService.createOrder(
-                  products: _products,
-                  cart: _cart,
-                  totalAmount: totalPrice,
-                );
-
-                Navigator.pop(context);
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text("Order placed successfully!")),
-                );
-
-                setState(() {
-                  _cart.clear();
-                });
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Error: $e")),
-                );
-              }
+            onPressed: () {
+              Navigator.pop(context);
+              _razorpayService.openCheckout(
+                amount: totalPrice,
+                description: 'Grocery Order Payment',
+              );
             },
             child: const Text("Confirm"),
           ),
@@ -173,23 +217,22 @@ class _GroceryPageState extends State<GroceryPage> {
                       padding: const EdgeInsets.all(10),
                       child: Column(
                         children: [
-                          Text(product.name,
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.bold)),
+                          Text(
+                            product.name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
                           Text("₹${product.price.toStringAsFixed(2)}"),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.remove),
-                                onPressed: () =>
-                                    decrementItem(product.id),
+                                onPressed: () => decrementItem(product.id),
                               ),
                               Text(qty.toString()),
                               IconButton(
                                 icon: const Icon(Icons.add),
-                                onPressed: () =>
-                                    incrementItem(product.id),
+                                onPressed: () => incrementItem(product.id),
                               ),
                             ],
                           ),

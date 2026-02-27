@@ -5,6 +5,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 
 // Import your login screen here
 import 'package:famioproject/views/auth/login_screen.dart';
+import 'package:famioproject/services/auth_services.dart';
 
 class UberAdminProfilePage extends StatefulWidget {
   const UberAdminProfilePage({super.key});
@@ -17,16 +18,32 @@ class _UberAdminProfilePageState extends State<UberAdminProfilePage> {
   final ImagePicker _picker = ImagePicker();
   File? _profileImage;
 
-  final TextEditingController _nameController =
-      TextEditingController(text: "Admin Name");
-  final TextEditingController _emailController =
-      TextEditingController(text: "admin@uber.com");
-  final TextEditingController _phoneController =
-      TextEditingController(text: "+91 9876543210");
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final userData = await AuthService().getCurrentUserData();
+    if (userData != null && mounted) {
+      setState(() {
+        _nameController.text = userData['name'] ?? '';
+        _emailController.text = userData['email'] ?? '';
+        _phoneController.text = userData['phone'] ?? '';
+      });
+    }
+  }
 
   void _pickImage() async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
     if (pickedFile != null) {
       setState(() {
         _profileImage = File(pickedFile.path);
@@ -83,11 +100,15 @@ class _UberAdminProfilePageState extends State<UberAdminProfilePage> {
               child: CircleAvatar(
                 radius: 60,
                 backgroundColor: Colors.white12,
-                backgroundImage:
-                    _profileImage != null ? FileImage(_profileImage!) : null,
+                backgroundImage: _profileImage != null
+                    ? FileImage(_profileImage!)
+                    : null,
                 child: _profileImage == null
-                    ? const Icon(LucideIcons.user,
-                        size: 60, color: Colors.white70)
+                    ? const Icon(
+                        LucideIcons.user,
+                        size: 60,
+                        color: Colors.white70,
+                      )
                     : null,
               ),
             ),
@@ -145,8 +166,10 @@ class _UberAdminProfilePageState extends State<UberAdminProfilePage> {
               decoration: InputDecoration(
                 labelText: "Phone",
                 labelStyle: const TextStyle(color: Colors.white70),
-                prefixIcon:
-                    const Icon(LucideIcons.phone, color: Colors.white70),
+                prefixIcon: const Icon(
+                  LucideIcons.phone,
+                  color: Colors.white70,
+                ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(color: Colors.white24),
@@ -166,12 +189,15 @@ class _UberAdminProfilePageState extends State<UberAdminProfilePage> {
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text("Profile updated successfully!")),
+                      content: Text("Profile updated successfully!"),
+                    ),
                   );
                 },
                 icon: const Icon(LucideIcons.save, color: Colors.white),
-                label: const Text("Save Changes",
-                    style: TextStyle(color: Colors.white)),
+                label: const Text(
+                  "Save Changes",
+                  style: TextStyle(color: Colors.white),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -189,8 +215,10 @@ class _UberAdminProfilePageState extends State<UberAdminProfilePage> {
               child: ElevatedButton.icon(
                 onPressed: _logout,
                 icon: const Icon(LucideIcons.logOut, color: Colors.white),
-                label: const Text("Logout",
-                    style: TextStyle(color: Colors.white)),
+                label: const Text(
+                  "Logout",
+                  style: TextStyle(color: Colors.white),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
                   padding: const EdgeInsets.symmetric(vertical: 14),
