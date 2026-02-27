@@ -137,40 +137,64 @@ class _HomePageState extends State<HomePage> {
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                                  Row(
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.check,
-                                          color: Colors.green,
+                                  if (order.status == 'pending')
+                                    Row(
+                                      children: [
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.green,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8,
+                                            ),
+                                            minimumSize: const Size(80, 36),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          onPressed: () async {
+                                            await _orderService
+                                                .updateOrderStatus(
+                                                  order.id,
+                                                  'accepted',
+                                                );
+                                          },
+                                          child: const Text(
+                                            "Approve",
+                                            style: TextStyle(fontSize: 12),
+                                          ),
                                         ),
-                                        onPressed: order.status == 'accepted'
-                                            ? null
-                                            : () async {
-                                                await _orderService
-                                                    .updateOrderStatus(
-                                                      order.id,
-                                                      'accepted',
-                                                    );
-                                              },
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.close,
-                                          color: Colors.red,
+                                        const SizedBox(width: 8),
+                                        ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.red,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 8,
+                                            ),
+                                            minimumSize: const Size(80, 36),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          onPressed: () async {
+                                            await _orderService
+                                                .updateOrderStatus(
+                                                  order.id,
+                                                  'rejected',
+                                                );
+                                          },
+                                          child: const Text(
+                                            "Reject",
+                                            style: TextStyle(fontSize: 12),
+                                          ),
                                         ),
-                                        onPressed: order.status == 'rejected'
-                                            ? null
-                                            : () async {
-                                                await _orderService
-                                                    .updateOrderStatus(
-                                                      order.id,
-                                                      'rejected',
-                                                    );
-                                              },
-                                      ),
-                                    ],
-                                  ),
+                                      ],
+                                    ),
                                 ],
                               ),
                             ],

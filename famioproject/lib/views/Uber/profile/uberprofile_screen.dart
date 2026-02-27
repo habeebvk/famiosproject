@@ -89,6 +89,9 @@ class _UberAdminProfilePageState extends State<UberAdminProfilePage> {
         backgroundColor: Colors.black,
         elevation: 0,
         centerTitle: true,
+                leading: IconButton(icon: Icon(Icons.arrow_back,color:Colors.white),onPressed:(){
+          Navigator.pop(context);
+        },),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

@@ -15,6 +15,9 @@ class UberBookingScreen extends StatelessWidget {
         backgroundColor: Colors.black,
         appBar: AppBar(
           backgroundColor: Colors.black,
+          leading: IconButton(icon: Icon(Icons.arrow_back,color:Colors.white),onPressed:(){
+          Navigator.pop(context);
+        },),
           title: const Text(
             "Uber Bookings",
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),

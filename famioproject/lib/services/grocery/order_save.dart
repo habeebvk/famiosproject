@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:famioproject/models/grocery/orders.dart';
 import 'package:famioproject/models/grocery/product_model.dart';
 import 'package:famioproject/services/auth_services.dart';
@@ -26,15 +27,29 @@ class OrderService {
 
     final userData = await AuthService().getCurrentUserData();
     final userName = userData?['name'] ?? 'Unknown User';
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
     await _orderRef.add({
       'items': items,
       'totalAmount': totalAmount,
       'status': 'pending', // ✅ REQUIRED
       'userName': userName,
+      'userId': userId,
       'paymentId': paymentId,
       'createdAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  Stream<List<OrderModel>> getUserOrders() {
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? '';
+    return _orderRef
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => OrderModel.fromFirestore(doc))
+              .toList(),
+        );
   }
 
   Stream<List<OrderModel>> getOrders() {

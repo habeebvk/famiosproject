@@ -153,6 +153,9 @@ class _CarManagementPageState extends State<CarManagementPage> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
+        leading: IconButton(icon: Icon(Icons.arrow_back,color:Colors.white),onPressed:(){
+          Navigator.pop(context);
+        },),
         title: const Text("Cars & Drivers",
             style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white)),
       ),

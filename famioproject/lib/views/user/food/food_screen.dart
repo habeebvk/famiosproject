@@ -4,6 +4,11 @@ import 'package:famioproject/services/fooddelivery/food_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:famioproject/services/razorpay_service.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:famioproject/services/auth_services.dart';
+import 'dart:io';
 
 class FoodPurchasePage extends StatefulWidget {
   @override
@@ -13,6 +18,10 @@ class FoodPurchasePage extends StatefulWidget {
 class _FoodPurchasePageState extends State<FoodPurchasePage> {
   final FoodProductService _service = FoodProductService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Map<String, dynamic>? _userData;
+  bool _isUploading = false;
+  final ImagePicker _picker = ImagePicker();
 
   /// quantity map (productId → qty)
   final Map<String, int> _quantity = {};
@@ -41,12 +50,136 @@ class _FoodPurchasePageState extends State<FoodPurchasePage> {
   @override
   void initState() {
     super.initState();
+    _loadUserData();
     _razorpayService = RazorpayService();
     _razorpayService.init(
       onSuccess: _handlePaymentSuccess,
       onFailure: _handlePaymentFailure,
       onExternalWallet: _handleExternalWallet,
     );
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final data = await AuthService().getCurrentUserData();
+      if (mounted) {
+        setState(() {
+          _userData = data;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error loading profile: $e");
+    }
+  }
+
+  Future<void> _pickImage() async {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              "Choose Profile Photo",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildPickerOption(
+                  icon: Icons.photo_library,
+                  label: "Gallery",
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final XFile? image = await _picker.pickImage(
+                      source: ImageSource.gallery,
+                    );
+                    if (image != null) {
+                      await _uploadImage(File(image.path));
+                    }
+                  },
+                ),
+                _buildPickerOption(
+                  icon: Icons.camera_alt,
+                  label: "Camera",
+                  onTap: () async {
+                    Navigator.pop(context);
+                    final XFile? image = await _picker.pickImage(
+                      source: ImageSource.camera,
+                    );
+                    if (image != null) {
+                      await _uploadImage(File(image.path));
+                    }
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPickerOption({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 30,
+            backgroundColor: Colors.orange.withOpacity(0.1),
+            child: Icon(icon, color: Colors.deepOrange, size: 30),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _uploadImage(File imageFile) async {
+    setState(() => _isUploading = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('profile_images')
+          .child('${user.uid}.jpg');
+
+      await storageRef.putFile(imageFile);
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update(
+        {'profileImageUrl': downloadUrl},
+      );
+
+      await _loadUserData();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Profile picture updated!")),
+        );
+      }
+    } catch (e) {
+      debugPrint("Error uploading image: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Failed to upload image: $e")));
+      }
+    } finally {
+      if (mounted) setState(() => _isUploading = false);
+    }
   }
 
   @override
@@ -189,6 +322,50 @@ class _FoodPurchasePageState extends State<FoodPurchasePage> {
           "🍴 Food Order",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: GestureDetector(
+              onTap: _pickImage,
+              child: Stack(
+                alignment: Alignment.bottomRight,
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: Colors.white24,
+                    backgroundImage: _userData?['profileImageUrl'] != null
+                        ? NetworkImage(_userData!['profileImageUrl'])
+                        : null,
+                    child: _isUploading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : (_userData?['profileImageUrl'] == null
+                              ? const Icon(Icons.person, color: Colors.white)
+                              : null),
+                  ),
+                  Container(
+                    decoration: const BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.white,
+                    ),
+                    padding: const EdgeInsets.all(2),
+                    child: const Icon(
+                      Icons.edit,
+                      color: Colors.deepOrange,
+                      size: 10,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
         centerTitle: true,
         backgroundColor: Colors.deepOrangeAccent,
       ),

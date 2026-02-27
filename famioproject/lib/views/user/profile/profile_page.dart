@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:famioproject/views/user/grocery/user_orders_screen.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -282,43 +283,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 25),
-
-                  // 🧾 About Section
-                  Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    elevation: 3,
-                    shadowColor: Colors.black26,
-                    child: Padding(
-                      padding: const EdgeInsets.all(18.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            "About Me",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            "I’m a passionate Flutter developer who loves crafting visually appealing and functional apps. "
-                            "I enjoy collaborating with teams and creating digital experiences that make an impact.",
-                            style: TextStyle(
-                              color: Colors.black87,
-                              height: 1.4,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 30),
+                  SizedBox(height: 30),
 
                   // ⚙️ Options Section
                   Column(
@@ -331,6 +296,18 @@ class _ProfilePageState extends State<ProfilePage> {
                             context,
                             MaterialPageRoute(
                               builder: (_) => const SettingsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      ProfileOption(
+                        icon: Icons.receipt_long,
+                        title: "My Orders",
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => UserOrdersScreen(),
                             ),
                           );
                         },

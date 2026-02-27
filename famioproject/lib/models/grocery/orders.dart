@@ -17,6 +17,8 @@ class OrderModel {
   final double totalAmount;
   final String status;
   final String userName;
+  final String userId;
+  final String? paymentId;
 
   OrderModel({
     required this.id,
@@ -24,6 +26,8 @@ class OrderModel {
     required this.totalAmount,
     required this.status,
     required this.userName,
+    required this.userId,
+    this.paymentId,
   });
 
   factory OrderModel.fromFirestore(DocumentSnapshot doc) {
@@ -35,6 +39,8 @@ class OrderModel {
       totalAmount: (data['totalAmount'] as num).toDouble(),
       status: data['status'] ?? 'pending',
       userName: data['userName'] ?? 'Unknown User',
+      userId: data['userId'] ?? '',
+      paymentId: data['paymentId'],
     );
   }
 }

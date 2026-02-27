@@ -2,6 +2,7 @@ import 'package:famioproject/models/grocery/product_model.dart';
 import 'package:famioproject/services/grocery/order_save.dart';
 import 'package:famioproject/services/grocery/product.dart';
 import 'package:famioproject/services/razorpay_service.dart';
+import 'package:famioproject/views/user/grocery/user_orders_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 
@@ -147,6 +148,17 @@ class _GroceryPageState extends State<GroceryPage> {
           "🛒 Grocery Shop",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => UserOrdersScreen()),
+              );
+            },
+            icon: const Icon(Icons.receipt_long, color: Colors.white),
+          ),
+        ],
         backgroundColor: Colors.green.shade600,
         centerTitle: true,
       ),

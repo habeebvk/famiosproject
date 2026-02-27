@@ -69,6 +69,9 @@ class _UberRideRequestsPageState extends State<UberRideRequestsPage> {
             fontWeight: FontWeight.bold,
           ),
         ),
+        leading: IconButton(icon: Icon(Icons.arrow_back,color:Colors.white),onPressed:(){
+          Navigator.pop(context);
+        },),
         backgroundColor: Colors.black,
         elevation: 0,
         centerTitle: true,
